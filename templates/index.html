@@ -1,47 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Code Difficulty Analyzer</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f9f9f9;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fffaf6;
+      margin: 0;
+      padding: 0;
+      position: relative;
+      height: 100%;
+    }
+
+    /* Full screen container for Vanta effect */
+    #vanta-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* Ensure it stays behind other content */
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
+    }
+
+    .modal-content {
+      background-color: white;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 8px;
+      width: 80%;
+      max-width: 600px;
+    }
+
+    /* Modal Close Button */
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Header Styles */
+    .site-header {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .logo {
+      height: 40px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .nav-button {
+      background: none;
+      border: none;
+      color: #ff6600;
+      font-weight: 500;
+      font-size: 15px;
+      cursor: pointer;
+      transition: color 0.3s ease, background-color 0.3s ease;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .nav-button:hover {
+      color: #fff; /* Changed from darker orange to white */
+      background-color: #ff6600;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+      color: #333;
+    }
+
+    .main-container {
       display: flex;
       justify-content: center;
-      margin-top: 50px;
+      align-items: flex-start;
+      padding: 20px 40px;
+      gap: 30px;
     }
+
     .form-container {
-      background: white;
+      background: #ffffff;
       padding: 30px;
-      border-radius: 10px;
-      width: 500px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      width: 600px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
     }
-    input, textarea, button {
-      width: 100%;
-      margin-bottom: 15px;
-      padding: 10px;
-      font-size: 16px;
+
+    h2 {
+      font-size: 22px;
+      color: #ff6600;
+      margin-bottom: 10px;
     }
+
+    p.description {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 25px;
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    input[type="text"],
     textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+      background: #fcfcfc;
+      transition: border-color 0.2s;
       resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #ff6600;
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      background-color: #ff6600;
+      color: #fff;
+      padding: 14px;
+      font-size: 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #e65700;
+    }
+
+    .result {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: #f7f7f7;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      white-space: pre-wrap;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: all 0.4s ease;
+      display: none;
+    }
+
+    .result.show {
+      display: block;
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .result strong {
+      display: block;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+
+    .difficulty-easy {
+      color: #28a745;
+      font-weight: bold;
+    }
+
+    .difficulty-medium {
+      color: #ffc107;
+      font-weight: bold;
+    }
+
+    .difficulty-hard {
+      color: #dc3545;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>Code Difficulty Analyzer</h2>
-    <form id="questionForm">
-      <input type="text" name="topic" placeholder="Problem Title" required />
-      <textarea name="details" placeholder="Describe the problem in detail..." rows="10" required></textarea>
-      <button type="submit">Analyze Difficulty</button>
-    </form>
 
-    <div id="result" style="margin-top: 20px;"></div>
+  <!-- Full-screen background element for Vanta.js -->
+  <div id="vanta-bg"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <img src="https://cdn.prod.website-files.com/6278a259cc3db4179e7a3a8e/654b29875b7b00835efdede8_imocha%20logo.webp" alt="Logo" class="logo">
+    <div class="nav-buttons">
+      <button onclick="openModal('overviewModal')" class="nav-button">Overview</button>
+      <button onclick="openModal('howToUseModal')" class="nav-button">How to Use?</button>
+    </div>
+  </header>
+
+<h2><center>🧠 Code Difficulty Analyzer</center></h2>
+
+  <div class="main-container">
+    <div class="form-container">
+      <h2>Submit Your Coding Problem</h2>
+      <p class="description">Fill in your coding problem statement and let the AI analyze its difficulty.</p>
+
+      <form id="questionForm">
+        <label for="topic">Problem Statement (Title, Question)</label>
+        <textarea name="topic" id="topic" placeholder="e.g., Bitmask Register Update" rows="3" required></textarea>
+
+        <label for="details">Problem Description (Function Description, Constraints, Sample Input/Output)</label>
+        <textarea name="details" id="details" placeholder="Describe the problem clearly..." rows="8" required></textarea>
+
+        <button type="submit">Analyze Difficulty</button>
+      </form>
+    </div>
+
+    <div id="result" class="result"></div>
   </div>
 
+  <!-- Modal for Overview -->
+  <div id="overviewModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('overviewModal')">&times;</span>
+      <h1>Overview</h1>
+      <p>The Code Difficulty Analyzer is designed to assist educators, problem setters, and developers in estimating the difficulty of a programming problem. Leveraging the power of LLMs, this tool evaluates problem attributes such as bitwise logic, constraints, sample test cases, and implementation complexity. This ensures consistency and transparency in tagging problems as Easy, Medium, or Hard.</p>
+
+      <p>This tool is particularly useful for:
+        <ul>
+          <li>Curating coding problem sets for platforms and contests</li>
+          <li>Providing a baseline difficulty estimate for new problems</li>
+          <li>Assisting educators in classroom or homework design</li>
+        </ul>
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal for How to Use -->
+  <div id="howToUseModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('howToUseModal')">&times;</span>
+      <h1>How to Use?</h1>
+      <ol>
+        <li><strong>Enter the Problem Title:</strong> Clearly summarize what the problem is about in 5-10 words (e.g., Bitmask Register Update).</li>
+        <li><strong>Describe the Problem:</strong> Include the question statement, functional expectations, any bit field or logical conditions, constraints, and at least one sample input/output pair.</li>
+        <li><strong>Submit for Analysis:</strong> Press "Analyze Difficulty". This sends the data to our LLM backend which predicts the difficulty and provides reasoning.</li>
+        <li><strong>Review Results:</strong> On the right panel, the difficulty (Easy/Medium/Hard) will be color-coded with a 2-3 sentence justification.</li>
+        <li><strong>Iterate:</strong> You can adjust the question or constraints and re-submit for a different analysis.</li>
+      </ol>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
   <script>
+    VANTA.NET({
+      el: "#vanta-bg",  // Target the element with id 'vanta-bg'
+      mouseControls: true,
+      touchControls: true,
+      gyroControls: false,
+      minHeight: 200.00,
+      minWidth: 200.00,
+      scale: 1.00,
+      scaleMobile: 1.00,
+      color: 0xff883f,  // Orange color for the net effect
+      backgroundColor: 0xffffff,  // White background
+      points: 14.00,
+      maxDistance: 21.00,
+      spacing: 13.00
+    });
+
+    // Function to open a modal
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = "block";
+    }
+
+    // Function to close a modal
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+
+    // Close the modal if the user clicks outside of it
+    window.onclick = function(event) {
+      if (event.target.classList.contains('modal')) {
+        closeModal(event.target.id);
+      }
+    }
+
     document.getElementById("questionForm").onsubmit = async function (e) {
       e.preventDefault();
 
@@ -58,12 +337,24 @@
       });
 
       const result = await res.json();
-      document.getElementById("result").innerHTML = `
-        <strong>LLM Predicted Difficulty:</strong> ${result.llm_difficulty} <br/>
-        <strong>Reasoning:</strong><br/>
-        <pre style="white-space: pre-wrap;">${result.llm_reasoning}</pre>
+      const resultDiv = document.getElementById("result");
+      const difficulty = result.llm_difficulty?.toLowerCase() || 'unknown';
+
+      let difficultyClass = '';
+      if (difficulty === 'easy') difficultyClass = 'difficulty-easy';
+      else if (difficulty === 'medium') difficultyClass = 'difficulty-medium';
+      else if (difficulty === 'hard') difficultyClass = 'difficulty-hard';
+
+      resultDiv.innerHTML = ` 
+        <strong>LLM Predicted Difficulty:</strong>
+        <span class="${difficultyClass}">${result.llm_difficulty || 'Unknown'}</span>
+        <strong>Reasoning:</strong>
+        <span>${result.llm_reasoning || 'No reasoning provided.'}</span>
       `;
+
+      resultDiv.classList.add("show");
     };
   </script>
+
 </body>
 </html>

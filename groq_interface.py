@@ -9,25 +9,49 @@ class GroqLLMAnalyzer:
         self.api_key = api_key or os.getenv("GROQ_API_KEY")
 
     def build_prompt(self, data):
-        return f"""
-Analyze the following coding problem and classify its difficulty as Easy, Medium, or Hard.
+        sample_input = data.get('sample_input', 'N/A')
+        sample_output = data.get('sample_output', 'N/A')
 
-### Criteria:
-- Algorithmic Concepts (e.g., DP, graphs, etc.)
+        return f"""
+You are an expert programming problem analyst.
+
+Analyze the following coding problem and classify its difficulty as Easy, Medium, or Hard based on:
+
+- Algorithmic Concepts (e.g., bit manipulation, validation)
 - Problem Structure Complexity
 - Implementation Difficulty
-- Optimization Requirements
+- Optimization Needs
 - Input Size Constraints
 
-### Problem
-Title: {data['title']}
-Description: {data['description']}
-Constraints: {"; ".join(data['constraints'])}
-Examples: {data.get('examples', [])}
+---
 
-### Output Format:
-- Difficulty: Easy / Medium / Hard
-- Reasoning: Short justification (2-3 sentences)
+Problem Title:
+{data['title']}
+
+Question:
+{data['question']}
+
+Note:
+{data['note']}
+
+Function Description:
+{data['function_description']}
+
+Sample Input:
+{sample_input}
+
+Constraints:
+{"; ".join(data['constraints'])}
+
+Sample Output:
+{sample_output}
+
+---
+
+Please respond EXACTLY in this format:
+
+Difficulty: <Easy / Medium / Hard>
+Reasoning: <A brief 2-3 sentence explanation for the difficulty rating>
 """
 
     def analyze_question(self, data):
@@ -49,4 +73,4 @@ Examples: {data.get('examples', [])}
         if response.status_code == 200:
             return response.json()["choices"][0]["message"]["content"]
         else:
-            raise Exception(f"GROQ API error: {response.status_code} {response.text}")
+            raise Exception(f"GROQ API error: {response.status_code} {response.text}")                 
